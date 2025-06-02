@@ -25,7 +25,7 @@ COMMANDS = [
     'sin', 'cos', 'tan', 'sqrt', 'curt', 'log2', 'log', 'log10', 'exp', 'radians', 'degrees',
     'oct', 'crc32', 'md5', 'sha256', 'px2cm', 'cm2px', 'dpi_presets', 'now','leap','date','time'
     'shl', 'shr', 'len','length', 'repeat', 'wavelength', 'base64','decodebase64',
-    'hex2rgb', 'rgb2hex', 'rgb2hsl', 'hsl2rgb', 'roman', 'weekday','random',
+    'hex2rgb', 'rgb2hex', 'rgb2hsl', 'hsl2rgb', 'roman', 'weekday','random','calendar',
     'convert','res','tau','phi', 'tool','command','operation','convert','pixel',
     'quit', 'exit', 'help','big','clear','monthdays','addpercent','subpercent'
 ]
@@ -150,11 +150,13 @@ def showhelp(cat):
         print('                leap : checks if given year is leap')
         print('             weekday : returns name of given date')
         print('           monthdays : returns number of days in month')
+        print('                 cal : returns month calendar')
         print('  Examples:')
         print("    weekday(date)")
         print("    weekday('2025-05-14')")
         print("    leap(2025)")
         print("    monthdays('2025-10-22')")
+        print("    cal() or cal(2025,10)")
     elif cat == 'tool':
         print('  Tools:')
         print('    Functions:')
@@ -288,6 +290,40 @@ def weekday_name(date_str):
 def monthdays(sdate):
     year, month, day = map(int, sdate.split("-"))
     return calendar.monthrange(year, month)[1]
+    
+def cal(year=None, month=None):
+    """
+    Display a formatted month calendar.
+    
+    Args:
+        year (int): 4-digit year (default: current year)
+        month (int): 1-12 (default: current month)
+    
+    Returns:
+        str: Formatted calendar string
+    
+    Example:
+        >>> print(cal(2023, 8))
+        >>> print(cal())  # Current month
+    """
+    now = datetime.datetime.now()
+    year = year if year is not None else now.year
+    month = month if month is not None else now.month
+
+    # Validate inputs
+    if not (1 <= month <= 12):
+        raise ValueError("Month must be 1-12")
+    if not (0 < year < 10000):
+        raise ValueError("Year must be 1-9999")
+
+    # Generate calendar with custom formatting
+    cal_text = calendar.month(year, month)
+    
+    # Enhanced formatting
+    border = "-" * 20
+    header = f"{calendar.month_name[month]} {year}".center(20)
+    
+    return f"\n{border}\n{header}\n{border}\n{cal_text}{border}\n"
 
 # --- Unit Conversion Functions ---
 
@@ -519,24 +555,9 @@ def evaluate_expression(expr):
                 showhelp('')
                 return OLD
             else:
-                if s[1].startswith('tool'):
-                    showhelp('tool')
-                    return OLD
-                elif s[1].startswith('convert'):
-                    showhelp('convert')
-                    return OLD
-                elif s[1].startswith('command'):
-                    showhelp('command')
-                    return OLD
-                elif s[1].startswith('operation'):
-                    showhelp('operation')
-                    return OLD
-                elif s[1].startswith('pixel'):
-                    showhelp('pixel')
-                    return OLD
-                else:
-                    showhelp('')
-                    return OLD
+                showhelp(s[1])
+                return OLD
+                
             
         if expr.lower() in ['c','ce']:
             OLD = 0
@@ -608,7 +629,8 @@ def evaluate_expression(expr):
             'random' : random_int,
             'monthdays' : monthdays,
             'addpercent' : addpercent,
-            'subpercent' : subpercent
+            'subpercent' : subpercent,
+            'cal' : cal
         })
         
         print('# '+expr)
