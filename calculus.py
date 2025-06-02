@@ -8,9 +8,14 @@ import readline
 import hashlib
 import binascii
 import colorsys
+import calendar
+import base64
+import time
+import datetime
+import random
 
 NAME="Calculus"
-VER="1.0"
+VER="1.0.1"
 OLD=0
 MAX_HISTORY=100
 readline.set_history_length(MAX_HISTORY)
@@ -18,11 +23,11 @@ readline.set_history_length(MAX_HISTORY)
 # --- Tab Completion Setup ---
 COMMANDS = [
     'sin', 'cos', 'tan', 'sqrt', 'curt', 'log2', 'log', 'log10', 'exp', 'radians', 'degrees',
-    'oct', 'crc32', 'md5', 'sha256', 'px2cm', 'cm2px', 'dpi_presets',
-    'shl', 'shr', 'len','length', 'repeat',
-    'hex2rgb', 'rgb2hex', 'rgb2hsl', 'hsl2rgb',
+    'oct', 'crc32', 'md5', 'sha256', 'px2cm', 'cm2px', 'dpi_presets', 'now','leap','date','time'
+    'shl', 'shr', 'len','length', 'repeat', 'wavelength', 'base64','decodebase64',
+    'hex2rgb', 'rgb2hex', 'rgb2hsl', 'hsl2rgb', 'roman', 'weekday','random',
     'convert','res','tau','phi', 'tool','command','operation','convert','pixel',
-    'quit', 'exit', 'help','big','clear'
+    'quit', 'exit', 'help','big','clear','monthdays','addpercent','subpercent'
 ]
 
 def completer(text, state):
@@ -96,6 +101,8 @@ def showhelp(cat):
         print('      dpi_presets()                  # Show available presets')
     
     elif cat == 'convert':
+        print('  Functions:')
+        print('             roman : convert integer to roman string')
         print('  Conversions:')
         print('    Supported Units:')
         print('    Length: m, km, cm, mm, mi, yd, ft, in')
@@ -127,11 +134,27 @@ def showhelp(cat):
         print("                 e : euler's number")
         print('               res : previous result')
         print('               oct : return octal number')
+        print('            random : return a random integer from 0 to parameter')
+        print('        addpercent : adds the percentage value to number')
+        print('        subpercent : subtracts the percentage value to number')
     elif cat == 'command':
         print('  Commands:')
         print('      cl,clear,cls : clear screen')
         print('              c,ce : clear stored value')
         print('     quit,exit,q,x : exit program')
+    elif cat == 'time':
+        print('  Time:')
+        print('    Functions:')
+        print('                time : returns current time')
+        print('                date : returns current date')
+        print('                leap : checks if given year is leap')
+        print('             weekday : returns name of given date')
+        print('           monthdays : returns number of days in month')
+        print('  Examples:')
+        print("    weekday(date)")
+        print("    weekday('2025-05-14')")
+        print("    leap(2025)")
+        print("    monthdays('2025-10-22')")
     elif cat == 'tool':
         print('  Tools:')
         print('    Functions:')
@@ -142,6 +165,8 @@ def showhelp(cat):
         print('      repeat(char,n) : repeat char/string n times')
         print('         len(string) : returns length of string')
         print('    hex2rgb(#FFFFFF) : hex to RGB value')
+        print('              base64 : encode string to base64')
+        print('        decodebase64 : decode string to base64')
         print('    rgb2hex(byte,byte,byte) : RGB to HEX value')
         print('    rgb2hsl(byte,byte,byte) : RGB to HSL value')
         print('    hsl2rgb(byte,byte,byte) : HSL to RGB value')
@@ -150,17 +175,8 @@ def showhelp(cat):
         print("    repeat('na', 10) + ' Batman!'  # Fun with strings")
         print("    repeat(hex(16), 5)  # Combine with other functions")
         print("    hex2rgb('#FF5733')")
-        print("    > RGB: (255, 87, 51)")
-        print("    > Hex: #ff5733")
-        print("    > HSL: (12.0°, 100.0%, 60.0%)")
         print("    rgb2hsl(0, 255, 0)")
-        print("    > RGB: (0, 255, 0)")
-        print("    > Hex: #00ff00")
-        print("    > HSL: (120.0°, 100.0%, 50.0%)")
         print("    hsl2rgb(240, 100, 50)")
-        print("    > RGB: (0, 0, 255)")
-        print("    > Hex: #0000ff")
-        print("    > HSL: (240.0°, 100.0%, 50.0%)")
     else:
         print(f'{NAME} v{VER}')
         print('  Type...')
@@ -169,6 +185,7 @@ def showhelp(cat):
         print('    help operation : for mathematical operations')
         print('      help command : for program commands')
         print('        help pixel : pixel conversion functions')
+        print('         help time : time/calendar functions')
         print(' ')
         print('Up/Down keys navigate through command history')
         print('Press TAB for command auto-completion')
@@ -257,8 +274,34 @@ def big_numbers(text: str) -> str:
 
     return '\n'.join(lines)
 
+# calendar functions
+
+def is_leap(year):
+    """Check leap year"""
+    return int(calendar.isleap(year))
+
+def weekday_name(date_str):
+    """Get weekday name for date (YYYY-MM-DD)"""
+    year, month, day = map(int, date_str.split('-'))
+    return str(calendar.day_name[calendar.weekday(year, month, day)])
+    
+def monthdays(sdate):
+    year, month, day = map(int, sdate.split("-"))
+    return calendar.monthrange(year, month)[1]
 
 # --- Unit Conversion Functions ---
+
+def roman(num):
+    """Convert integer to Roman numerals (up to 3999)"""
+    val = [1000,900,500,400,100,90,50,40,10,9,5,4,1]
+    syb = ["M","CM","D","CD","C","XC","L","XL","X","IX","V","IV","I"]
+    roman = ""
+    for i in range(len(val)):
+        count = num // val[i]
+        roman += syb[i] * count
+        num -= val[i] * count
+    return roman
+    
 def convert(value, from_unit, to_unit):
     """Handle unit conversions including temperature."""
     from_unit = from_unit.lower()
@@ -304,6 +347,47 @@ def parse_conversion(expr):
     to_unit = parts[1].lower()
     
     return convert(value, from_unit, to_unit)
+    
+# frequency functions
+
+def wavelength(freq_input):
+    """
+    Calculates wavelength (in meters) from a given frequency.
+
+    Accepts:
+    - Strings with units: 'MHz', 'Hz'
+    - Integers or floats (assumes Hz if >1e6, otherwise MHz)
+
+    Returns:
+    - Wavelength in meters (float)
+    """
+
+    # Speed of light in m/s
+    c = 3e8
+
+    # Parse input
+    if isinstance(freq_input, str):
+        freq_input = freq_input.strip().lower()
+        if 'mhz' in freq_input:
+            value = float(freq_input.replace('mhz', '').strip())
+            freq_hz = value * 1e6
+        elif 'hz' in freq_input:
+            value = float(freq_input.replace('hz', '').strip())
+            freq_hz = value
+        else:
+            raise ValueError("Unknown unit. Use 'Hz' or 'MHz'.")
+    elif isinstance(freq_input, (int, float)):
+        # Assume Hz if it's a big number, MHz if it's small
+        if freq_input > 1e6:
+            freq_hz = freq_input
+        else:
+            freq_hz = freq_input * 1e6
+    else:
+        raise TypeError("Input must be a string, int, or float.")
+
+    # Calculate wavelength
+    wavelength = c / freq_hz
+    return f'{wavelength} m'
 
 # --- Pixel Conversion Functions ---
 def pixels_to_cm(pixels, dpi='screen'):
@@ -326,6 +410,37 @@ def show_dpi_presets():
 def curt(data):
     """Cubic root of number"""
     return data ** (1/3)
+    
+def random_int(max_num):
+    """
+    Returns a random integer between 1 and max_num (inclusive).
+    
+    Parameters:
+        max_num (int): The maximum value to generate (must be positive)
+    
+    Returns:
+        int: Random number between 1 and max_num
+    
+    Examples:
+        >>> random_int(10)  # Possible output: 7
+        >>> random_int(100) # Possible output: 42
+    """
+    if not isinstance(max_num, int) or max_num < 1:
+        raise ValueError("max_num must be a positive integer")
+    
+    return random.randint(1, max_num)
+    
+def addpercent(val,p):
+    try:
+        return f'= {val + (val * p / 100)} perc: {val * p / 100}'
+    except:
+        return -1
+
+def subpercent(val,p):
+    try:
+        return f'= {val - (val * p / 100)} perc: {val * p / 100}'
+    except:
+        return -1
 
 # string functions    
 def slen(data):
@@ -360,6 +475,12 @@ def sha256(data):
     if isinstance(data, int):
         data = str(data)
     return hashlib.sha256(data.encode()).hexdigest()
+    
+def encode_base64(text):
+    return base64.b64encode(text.encode()).decode()
+
+def decode_base64(encoded):
+    return base64.b64decode(encoded).decode()
     
 # --- Color Conversion Functions ---
 def hex2rgb(hex_color):
@@ -474,7 +595,20 @@ def evaluate_expression(expr):
             'cm2px': cm_to_pixels,
             'dpi_presets': show_dpi_presets(),
             'DPI_SCREEN': 96,
-            'DPI_PRINT': 300
+            'DPI_PRINT': 300,
+            'wavelength': wavelength,
+            'roman': roman,
+            'base64': encode_base64,
+            'decodebase64': decode_base64,
+            'now'  : datetime.datetime.now(),
+            'date' : datetime.datetime.now().strftime('%Y-%m-%d'),
+            'time' : time.strftime('%H:%M', time.localtime()),
+            'leap' : is_leap,
+            'weekday' : weekday_name,
+            'random' : random_int,
+            'monthdays' : monthdays,
+            'addpercent' : addpercent,
+            'subpercent' : subpercent
         })
         
         print('# '+expr)
