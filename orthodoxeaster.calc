@@ -1,0 +1,28 @@
+noecho
+ask(Input Year: )
+@y
+
+rs(y) % 4
+@a
+
+rs(y) % 7
+@b
+
+rs(y) % 19
+@c
+
+(19*rs(c) + 15) % 30
+@d
+
+(2*rs(a) + 4*rs(b) - rs(d) + 34) % 7
+@e
+
+#Month-----
+(rs(d) + rs(e) + 114) // 31
+@month
+#Day ------
+((rs(d) + rs(e) + 114) % 31) + 1
+@day
+echo
+write('{yellow}{bold}At {y} the Easter is on...(MM/DD) {month}/{day}')
+

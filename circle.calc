@@ -1,0 +1,22 @@
+noecho
+ask(Input Circle Radius: )
+@r
+
+rs(r) * pi * 2
+@perimeter
+
+pi * rs(r)^2
+@area
+
+4*pi*rs(r)^2
+@spherearea
+
+(4 / 3) * pi * rs(r)^3
+@spherevolume
+
+echo
+write({cyan}{bold}Circle perimeter> {perimeter})
+write({cyan}{bold}Circle area     > {area})
+write({yellow}{bold}Sphere area     > {spherearea})
+write({yellow}{bold}Sphere Volume   > {spherevolume})
+

@@ -1,0 +1,18 @@
+# Basic calculations
+5
+@x
+var
+2+2
+5 * 10
+pause
+clear
+# Unit conversions
+5km to mi
+32f to c
+
+# Functions
+md5(hello)
+hex2rgb(FF0000)
+leap(2024)
+
+res
