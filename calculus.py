@@ -59,7 +59,9 @@ STRING_FUNCTIONS = [
         'md5', 'sha256', 'crc32', 'hex2rgb', 'rgb2hex', 
         'rgb2hsl', 'hsl2rgb', 'len', 'length', 'repeat',
         'base64', 'decodebase64', 'weekday', 'monthdays','ask',
-        'ss','rs','store','restore','file','print','write'
+        'ss','rs','store','restore','file','print','write',
+        'daysbetween','adddays','dayofyear','weeknumber','weekend',
+        'date2unix', 'unix2date', 'unix2gregorian', 'unix2julian'
     ]
 COMMANDS = [
     'sin', 'cos', 'tan', 'sqrt', 'curt', 'log2', 'log', 'log10', 'exp', 'radians', 'degrees',
@@ -236,6 +238,47 @@ CONVERSIONS = {
     'tb': 1024**4,
 }
 
+def formatvars(template):
+    """
+    Replace {variables} in a string with values from STORE dictionary.
+    Supports nested expressions and maintains original formatting when variables don't exist.
+    """
+    global STORE, CL
+    
+    def replace_match(match):
+        var_name = match.group(1)
+        
+        # Handle nested expressions (like {var.upper()})
+        if '.' in var_name:
+            base_var, _, operation = var_name.partition('.')
+            if base_var in STORE:
+                try:
+                    value = getattr(STORE[base_var], operation)()
+                    return str(value)
+                except AttributeError:
+                    return match.group(0)  # Return original if operation fails
+            return match.group(0)
+        
+        # Simple variable replacement
+        if var_name in STORE:
+            return str(STORE[var_name])
+        return match.group(0)  # Return original if variable not found
+    
+    try:
+        # First pass: Replace direct variable references
+        result = re.sub(r'\{([^}]+)\}', replace_match, template)
+        
+        # Second pass: Handle any expressions that might reference STORE vars
+        while True:
+            new_result = re.sub(r'\{([^}]+)\}', replace_match, result)
+            if new_result == result:  # No more replacements possible
+                break
+            result = new_result
+            
+        return result
+    except Exception as e:
+        return f"{CL['red']}Format error: {str(e)}{CL['reset']}"
+
 def pline(cmd,text,pad=6):
     print(f"{' '*pad}{CL['bold']}{CL['white']}{cmd.strip().ljust(25)} {CL['cyan']}: {CL['reset']}{CL['white']}{text.strip().ljust(40)}")
 
@@ -299,15 +342,15 @@ def showhelp(cat):
         pline('             prime ',' returns 0/1 if number is prime')
     elif cat == 'command':
         title('  Commands:')
-        pline('      cl,clear,cls ',' clear screen')
-        pline('              c,ce ',' clear stored value')
-        pline('         store,ss ',' store value to variable')
-        pline('        restore,rs ',' restore value from variable')
+        pline('cl,clear,cls ',' clear screen')
+        pline('c,ce ',' clear stored value')
+        pline('store(var),ss ',' store value to variable')
+        pline('restore(var),rs ',' restore value from variable')
         pline('var ',' show all stored variables')
         pline('ls,list ','list .calc files in current dir.')
         pline('             reset ',' clear all stored variables')
-        pline('file','execute given file')
-        pline('print,write','output given string')
+        pline('file(filename)','execute given file')
+        pline('print(string),write','output given string')
         pline('pause','wait for enter, only for use in files')
         pline('     quit,exit,q,x ',' exit program')
         title('  Examples:')
@@ -319,10 +362,19 @@ def showhelp(cat):
         title('    Functions:')
         pline('                time ',' returns current time')
         pline('                date ',' returns current date')
-        pline('                leap ',' checks if given year is leap')
-        pline('             weekday ',' returns name of given date')
-        pline('           monthdays ',' returns number of days in month')
-        pline('                 cal ',' returns month calendar')
+        pline('leap(year) ',' checks if given year is leap')
+        pline('weekday(yyyy-mm-dd) ',' returns name of given date')
+        pline('monthdays(''yyyy-mm-dd'') ',' returns number of days in month')
+        pline('cal(yyyy,mm)',' returns month calendar')
+        pline('daysbetween(''yyyy-mm-dd'',''yyyy-mm-dd'')','returns how many days between to dates')
+        pline('adddays(''yyyy-mm-dd'',num)','add <num> days and returns date')
+        pline('dayofyear(''yyyy-mm-dd'')','returns number of days of the year')
+        pline('weeknumber(''yyyy-mm-dd'')','returns number of week')
+        pline('weekend(''yyyy-mm-dd'')','return 0/1 if date is on weekend')
+        pline('date2unix(''yyyy-mm-dd'')',' convert date string to UNIX timestamp')
+        pline('unix2date(timestamp)',' convert UNIX time to readable date')
+        pline('unix2gregorian(timestamp)',' get Gregorian calendar components')
+        pline('unix2julian(timestamp)',' convert to Julian Date')
         title('  Examples:')
         print("    weekday(date)")
         print("    weekday('2025-05-14')")
@@ -332,18 +384,18 @@ def showhelp(cat):
     elif cat == 'tool':
         title('Tools',pad=2)
         title('    Functions:')
-        pline('    crc32,md5,sha256 ',' return hash number of string')
+        pline('crc32(string),md5,sha256 ',' return hash number of string')
         pline('                   . ',' ex. crc32("hello")')
-        pline('             shr,shl ',' shift bitwise left or right')
+        pline('shr(num,times),shl ',' shift bitwise left or right')
         pline('                   . ',' ex. shl(4, 2)')
-        pline('      repeat(char,n) ',' repeat char/string n times')
-        pline('         len(string) ',' returns length of string')
-        pline('    hex2rgb(#FFFFFF) ',' hex to RGB value')
-        pline('              base64 ',' encode string to base64')
-        pline('        decodebase64 ',' decode string to base64')
-        pline('    rgb2hex(byte,byte,byte) ',' RGB to HEX value')
-        pline('    rgb2hsl(byte,byte,byte) ',' RGB to HSL value')
-        pline('    hsl2rgb(byte,byte,byte) ',' HSL to RGB value')
+        pline('repeat(char,n) ',' repeat char/string n times')
+        pline('len(string) ',' returns length of string')
+        pline('hex2rgb(#FFFFFF) ',' hex to RGB value')
+        pline('base64(string)',' encode string to base64')
+        pline('decodebase64(string)',' decode string to base64')
+        pline('rgb2hex(byte,byte,byte) ',' RGB to HEX value')
+        pline('rgb2hsl(byte,byte,byte) ',' RGB to HSL value')
+        pline('hsl2rgb(byte,byte,byte) ',' HSL to RGB value')
         title('  Examples:')
         print("    repeat('*', 40)  # Create a visual separator")
         print("    repeat('na', 10) + ' Batman!'  # Fun with strings")
@@ -474,17 +526,99 @@ def listfiles():
 
 # calendar functions
 
+def date_to_unix(date_str):
+    """
+    Convert date string (YYYY-MM-DD [HH:MM:SS]) to UNIX timestamp
+    Usage: date_to_unix("2023-01-01") or date_to_unix("2023-01-01 12:00:00")
+    """
+    try:
+        date_str = formatvars(date_str)
+        dt = datetime.datetime.strptime(date_str, "%Y-%m-%d")
+        return int(time.mktime(dt.timetuple()))
+    except ValueError as e:
+        return f"{CL['red']}Invalid date format. Use YYYY-MM-DD or YYYY-MM-DD HH:MM:SS{CL['reset']}"
+
+def unix_to_date(timestamp, format_str="%Y-%m-%d"):
+    """
+    Convert UNIX timestamp to formatted date string
+    Usage: unix_to_date(1672531200) or unix_to_date(1672531200, "%Y-%m-%d")
+    """
+    try:
+        return datetime.datetime.fromtimestamp(int(timestamp)).strftime(format_str)
+    except (ValueError, TypeError) as e:
+        return f"{CL['red']}Invalid timestamp{CL['reset']}"
+
+def unix_to_gregorian(timestamp):
+    """
+    Convert UNIX timestamp to Gregorian calendar components
+    Returns: (year, month, day, hour, minute, second)
+    Usage: unix_to_gregorian(1672531200)
+    """
+    try:
+        dt = datetime.datetime.fromtimestamp(int(timestamp))
+        return (dt.year, dt.month, dt.day)
+    except (ValueError, TypeError) as e:
+        return f"{CL['red']}Invalid timestamp{CL['reset']}"
+        
+def unix_to_julian(timestamp):
+    """
+    Convert UNIX timestamp to Julian Date
+    Usage: unix_to_julian(1672531200)
+    """
+    try:
+        # Julian Date starts at noon UTC
+        jd = (int(timestamp) + 43200) / 86400.0 + 2440587.5
+        return round(jd, 6)
+    except (ValueError, TypeError) as e:
+        return f"{CL['red']}Invalid timestamp{CL['reset']}"
+
+def days_between(date1, date2):
+    """Calculate number of days between two dates (YYYY-MM-DD)"""
+    date1 = formatvars(date1)
+    date2 = formatvars(date2)
+    d1 = datetime.datetime.strptime(date1, "%Y-%m-%d")
+    d2 = datetime.datetime.strptime(date2, "%Y-%m-%d")
+    return abs((d2 - d1).days)
+    
+def add_days(date_str, days):
+    """Add days to a date (YYYY-MM-DD)"""
+    date_str = formatvars(date_str)
+    date = datetime.datetime.strptime(str(date_str), "%Y-%m-%d")
+    new_date = date + datetime.timedelta(days=days)
+    return new_date.strftime("%Y-%m-%d")
+    
+def day_of_year(date_str):
+    date_str = formatvars(date_str)
+    """Return day of year (1-366) for a date (YYYY-MM-DD)"""
+    date = datetime.datetime.strptime(date_str, "%Y-%m-%d")
+    return date.timetuple().tm_yday
+
+def week_number(date_str):
+    """Return ISO week number for a date (YYYY-MM-DD)"""
+    date_str = formatvars(date_str)
+    date = datetime.datetime.strptime(date_str, "%Y-%m-%d")
+    return date.isocalendar()[1]
+    
+def is_weekend(date_str):
+    """Check if date falls on a weekend (YYYY-MM-DD)"""
+    date_str = formatvars(date_str)
+    date = datetime.datetime.strptime(date_str, "%Y-%m-%d")
+    return int(date.weekday() >= 5)  # 5=Saturday, 6=Sunday    
+
 def is_leap(year):
     """Check leap year"""
+    year = formatvars(year)
     return int(calendar.isleap(year))
 
 def weekday_name(date_str):
     """Get weekday name for date (YYYY-MM-DD)"""
+    date_str = formatvars(date_str)
     year, month, day = map(int, date_str.split('-'))
     return str(calendar.day_name[calendar.weekday(year, month, day)])
     
-def monthdays(sdate):
-    year, month, day = map(int, sdate.split("-"))
+def monthdays(date_str):
+    date_str = formatvars(date_str)
+    year, month, day = map(int, date_str.split("-"))
     return calendar.monthrange(year, month)[1]
     
 def cal(year=None, month=None):
@@ -502,6 +636,9 @@ def cal(year=None, month=None):
         >>> print(cal(2023, 8))
         >>> print(cal())  # Current month
     """
+    month = int(formatvars(month))
+    year = int(formatvars(year))
+    
     now = datetime.datetime.now()
     year = year if year is not None else now.year
     month = month if month is not None else now.month
@@ -925,7 +1062,17 @@ def evaluate_expression(expr):
             'vars' : show_all(),
             'file' : executefile,
             'write': write,
-            'print': write            
+            'print': write,
+            'daysbetween': days_between,
+            'adddays': add_days,
+            'dayofyear': day_of_year,
+            'weeknumber': week_number,
+            'weekend': is_weekend,
+            'date2unix': date_to_unix,
+            'unix2date': unix_to_date,
+            'unix2gregorian': unix_to_gregorian,
+            'unix2julian': unix_to_julian
+
         })
         
         #print('# '+expr)
