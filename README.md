@@ -6,6 +6,8 @@ Calculus is a command line calculator written in Python. It's made for use for a
 
 [![asciicast](https://asciinema.org/a/721996.svg)](https://asciinema.org/a/721996)
 https://asciinema.org/a/721996
+🎥 [Watch terminal demo on asciinema](https://asciinema.org/a/721996)
+
 
 ## Features
 
