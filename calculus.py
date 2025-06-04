@@ -59,16 +59,16 @@ STRING_FUNCTIONS = [
         'md5', 'sha256', 'crc32', 'hex2rgb', 'rgb2hex', 
         'rgb2hsl', 'hsl2rgb', 'len', 'length', 'repeat',
         'base64', 'decodebase64', 'weekday', 'monthdays','ask',
-        'ss','rs','store','restore','file','print','write',
+        'ss','rs','store','restore','file','print','write','set',
         'daysbetween','adddays','dayofyear','weeknumber','weekend',
         'date2unix', 'unix2date', 'unix2gregorian', 'unix2julian'
     ]
 COMMANDS = [
     'sin', 'cos', 'tan', 'sqrt', 'curt', 'log2', 'log', 'log10', 'exp', 'radians', 'degrees',
     'oct', 'px2cm', 'cm2px', 'dpi_presets', 'now','leap','date','time'
-    'shl', 'shr', 'wavelength', 'ss','rs',
+    'shl', 'shr', 'wavelength', 'ss','rs','hex',
     'roman', 'random', 'var', 'remove','list','ls',
-    'convert','res','tau','phi', 'tool','command','operation','convert','pixel',
+    'convert','result','tau','phi', 'tool','command','operation','convert','pixel',
     'quit', 'exit', 'help','big','clear', 'addpercent','subpercent','prime'
 ]
 
@@ -149,6 +149,13 @@ def rs(k):
         return a
     else:
         return None
+        
+def setvar(name,value):
+    global OLD,STORE,ECHO
+    STORE[str(name)]=str(value)
+    if ECHO:
+        print(f"{CL['white']}{name} {CL['yellow']}= {CL['green']}{value}")
+    return value
         
 def show_all():
     #global STORE
@@ -335,7 +342,8 @@ def showhelp(cat):
         pline('               phi ',' golden ratio')    
         pline('                 e ',' euler''s number')
         pline('               res ',' previous result')
-        pline('               oct ',' return octal number')
+        pline('               oct ',' returns octal number')
+        pline('               hex ',' returns hex number')
         pline('            random ',' return a random integer from 0 to parameter')
         pline('        addpercent ',' adds the percentage value to number')
         pline('        subpercent ',' subtracts the percentage value to number')
@@ -659,6 +667,12 @@ def cal(year=None, month=None):
     return f"\n{border}\n{header}\n{border}\n{cal_text}{border}\n"
 
 # --- Unit Conversion Functions ---
+
+def tohex(num):
+    return str(hex(num))[2:]
+    
+def tooct(num):
+    return str(oct(num))[2:]    
 
 def roman(num):
     """Convert integer to Roman numerals (up to 3999)"""
@@ -1017,9 +1031,10 @@ def evaluate_expression(expr):
             'phi': 1.61803398874989484820,
             'tau':math.tau,
             'crc32': crc32, 'md5': md5, 'sha256': sha256,
-            'oct': oct,
+            'oct': tooct,
+            'hex': tohex,
             'curt': curt,
-            'res': OLD,
+            'result': OLD,
             'shl': lambda x, y: x << y,  # Left shift
             'shr': lambda x, y: x >> y,  # Right shift
             'e': math.e,
@@ -1062,6 +1077,7 @@ def evaluate_expression(expr):
             'vars' : show_all(),
             'file' : executefile,
             'write': write,
+            'set' : setvar,
             'print': write,
             'daysbetween': days_between,
             'adddays': add_days,

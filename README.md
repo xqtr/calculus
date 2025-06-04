@@ -1,7 +1,7 @@
 # calculus
 Powerful command line calculator, in Python
 
-Calculus is a command line calculator written in Python. It's made for use for a variety of uses and people as a common, everyday tool. You can use it, for simple calculations, as for more advanced things, like scientific/mathematical calculations and as a helpful tool in programming.
+Calculus is a command line calculator written in Python. It's made for use for a variety of uses and people as a common, everyday tool. You can use it, for simple calculations, as for more advanced things, like scientific/mathematical calculations and as a helpful tool in programming. It's not another calculator... it's a tool!
 
 ## Features
 
@@ -21,6 +21,7 @@ Calculus is a command line calculator written in Python. It's made for use for a
 - Convert from RGB, to HEX or HSL formats and vice versa
 - Basic string functions, as length of string and create string, repeating a char or substring
 - Multiple Unit conversions (length, bytes, temperature etc.)
+- Date manipulation
 
 ### Interface
 - Able to use in every terminal
@@ -29,4 +30,7 @@ Calculus is a command line calculator written in Python. It's made for use for a
 - Uses Tab for command completion
 - Open source and able to extend, with even more commands
 - No need of external/installable modules. Uses only default ones.
-
+- Able to load external files and execute them
+- Able to store infinite variables and use them as parameters in functions
+- Able to input string for calculations
+- Colored TUI
