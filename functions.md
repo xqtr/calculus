@@ -132,11 +132,11 @@ See the examples below.
 
 **Examples**
 
--weekday("2025-05-14")
--leap(2025)
--monthdays("2025-10-22")
--cal() or cal(2025,10)
--weekend("{y}-{m}-{d}") # suppose y,m,d are stored variables 
+- weekday("2025-05-14")
+- leap(2025)
+- monthdays("2025-10-22")
+- cal() or cal(2025,10)
+- weekend("{y}-{m}-{d}") # suppose y,m,d are stored variables 
 
 
 ### Tools

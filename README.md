@@ -3,6 +3,8 @@ Powerful command line calculator, in Python
 
 Calculus is a command line calculator written in Python. It's made for use for a variety of uses and people as a common, everyday tool. You can use it, for simple calculations, as for more advanced things, like scientific/mathematical calculations and as a helpful tool in programming. It's not another calculator... it's a tool!
 
+https://asciinema.org/a/721996
+
 ## Features
 
 ### Calculator
